@@ -1,5 +1,5 @@
-cc = clang++
-cflags = -g
+cc = g++
+cflags = -O2
 lflags = -lcgicc
 program = bin/avlbase.cgi
 objects = obj/bst.o \

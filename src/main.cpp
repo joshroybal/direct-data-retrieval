@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <ctime>
+#include <cstring>
 #include <cgicc/Cgicc.h>
 #include "csv.hpp"
 #include "avl.hpp"
@@ -18,18 +20,19 @@ void printCopyright();
 
 int main()
 {
-   const int RECSIZ = 512;
-   const char infile[] = "/mnt/data/medium.dat";
-   char buf[RECSIZ];
+   const char infile[] = "/mnt/data/great.dat";
+   float t1, t2;
+   char recbuf[RECSIZ], keybuf[RECSIZ], fldbuf[FLDSIZ];
 
    std::cout << "Content-Type: text/html;charset=utf-8\n\n";
+
+   t1 = float(clock()) / CLOCKS_PER_SEC;
    
    cgicc::Cgicc cgi;
    cgicc::form_iterator search = cgi.getElement("search");
    cgicc::form_iterator pt = cgi.getElement("key");
    cgicc::form_iterator select = cgi.getElement("select");
    cgicc::form_iterator order = cgi.getElement("order");
-   // std::cout << "key = " << **pt << std::endl;
    std::string target(**pt);
    if ( target.length() == 0 ) {
       error();
@@ -73,18 +76,20 @@ int main()
 
    int n = 0;
    AVL* Tree = new AVL();
-   std::string record;
    std::ifstream ifstr(infile, std::ifstream::in | std::ifstream::binary);
-   while ( ifstr.read(buf, RECSIZ) ) {
-      std::string record(buf);
-      std::ostringstream osstr;
+   memset(recbuf, '\0', RECSIZ);
+   while ( ifstr.read(recbuf, RECSIZ) ) {
+      memset(keybuf, '\0', RECSIZ);
       for (int i = 0; i < keyfields.size(); i++) {
-         osstr << getField(record, keyfields[i]);
-         if (i < keyfields.size() - 1) osstr << ',';
+         if ( i > 0 ) strcat(keybuf, ",");
+         getField(fldbuf, recbuf, keyfields[i]);
+         strcat(keybuf, fldbuf);
       }
-      Tree->insert(osstr.str(), n++);   
+      Tree->insert( std::string(keybuf) , n++);   
+      memset(recbuf, '\0', RECSIZ);
    }
    ifstr.close();
+
    std::vector<int> idx = Tree->search(target);
    delete Tree;
 
@@ -95,15 +100,16 @@ int main()
          Tree = new AVL(); 
          ifstr.open(infile, std::ifstream::in | std::ifstream::binary);
          for (int i = 0; i < idx.size(); i++) {
+            memset(recbuf, '\0', RECSIZ);
             ifstr.seekg(idx[i] * RECSIZ);
-            ifstr.read(buf, RECSIZ);
-            std::string record(buf);
-            std::ostringstream osstr;
+            ifstr.read(recbuf, RECSIZ);
+            memset(keybuf, '\0', RECSIZ);
             for (int j = 0; j < ordfields.size(); j++) {
-               osstr << getField(record, ordfields[j]);
-               if (j < ordfields.size() - 1) osstr << ',';
+               if ( j > 0 ) strcat(keybuf, ",");
+               getField(fldbuf, recbuf, ordfields[j]);
+               strcat(keybuf, fldbuf);
             }
-            Tree->insert(osstr.str(), idx[i]);
+            Tree->insert( std::string(keybuf) , idx[i]);            
          }
          ifstr.close();
          idx.clear();
@@ -115,12 +121,13 @@ int main()
       printHeader(selflds);
       ifstr.open(infile, std::ifstream::in | std::ifstream::binary);
       for (int i = 0; i < idx.size(); i++) {
+         memset(recbuf, '\0', RECSIZ);
          ifstr.seekg(idx[i] * RECSIZ);
-         ifstr.read(buf, RECSIZ);
-         std::string record(buf);
+         ifstr.read(recbuf, RECSIZ);
          std::cout << "<tr>";
          for (int i = 0; i < selflds.size(); i++) {
-            std::cout << "<td>" << getField(record, selflds[i]) << "</td>";
+            getField(fldbuf, recbuf, selflds[i]);
+            std::cout << "<td>" << fldbuf << "</td>";
          }
          std::cout << "</tr>\n";
       }
@@ -130,6 +137,15 @@ int main()
       std::cout << "<p>no results found</p>\n";
    }
    
+   t2 = float(clock()) / CLOCKS_PER_SEC;
+
+   std::cout << "<ul>\n";
+   std::cout.precision(3);
+   std::cout << std::fixed;
+   std::cout << "<li>elapsed time = " << t2-t1 << " seconds</li>\n";
+   std::cout << "<li>no. of rows in relation = " << idx.size() << "</li>\n";
+   std::cout << "</ul>\n";
+
    printFooter();
 
    return 0;   
@@ -172,10 +188,14 @@ void printHeader()
    std::cout << "</head>\n";
    std::cout << "<body>\n";
    std::cout << "<header><p>C++ AVL balanced binary search tree data retrieval</p></header>\n";
+   std::cout << "<div><a href='/index.html'>Home</a> | <a href='/avlbase.html'>Back</a></div>\n";
+   std::cout << "<br>\n";
 }
 
 void printFooter()
 {
+   std::cout << "<br>\n";
+   std::cout << "<div><a href='/index.html'>Home</a> | <a href='/avlbase.html'>Back</a></div>\n";
    std::cout << "<footer><p>";
    printCopyright();
    std::cout << "</p></footer>\n";

@@ -1,3 +1,4 @@
+#include <cstring>
 #include "csv.hpp"
 
 // scan header for no. of fields that will need to be processed
@@ -59,6 +60,40 @@ std::string getField(const std::string& record, int n)
       j++;
    }
    return "";
+}
+
+void getField(char* field, const char* record, int n)
+{
+   const int RL = strlen(record);
+   int i = 0, j = 0, k = 0;
+
+   memset(field, '\0', FLDSIZ);
+   while (i < RL) {
+      while (record[i] != ',' && i < RL)
+         if (record[i] != '"')
+            if (j + 1 == n) {
+               field[k++] = record[i++];
+               if ( k == FLDSIZ-1 ) return;
+            }
+            else
+               i++;
+         else {
+            i++;
+            while (record[i] != '"') {
+               if (j + 1 == n) {
+                  field[k++] = record[i++];
+                  if ( k == FLDSIZ-1 ) return;
+               }
+               else
+                  i++;
+            }
+            i++;
+         }
+      if (j + 1 == n) return;
+      i++;
+      j++;
+   }
+   memset(field, '\0', FLDSIZ);
 }
 
 bool containsComma(const std::string& str)
