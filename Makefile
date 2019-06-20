@@ -27,6 +27,6 @@ clean:
 	rm $(program) $(objects)
 
 install:
-	sudo -u apache -g apache cp src/avlbase.html /srv/httpd/htdocs
-	sudo -u apache -g apache cp src/avlbase.js /srv/httpd/htdocs
+	# sudo -u apache -g apache cp src/avlbase.html /srv/httpd/htdocs
+	# sudo -u apache -g apache cp src/avlbase.js /srv/httpd/htdocs
 	sudo -u apache -g apache cp bin/avlbase.cgi /srv/httpd/cgi-bin

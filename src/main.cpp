@@ -20,7 +20,7 @@ void printCopyright();
 
 int main()
 {
-   const char infile[] = "/mnt/data/great.dat";
+   const char infile[] = "/mnt/data/dat/direct/great.dat";
    float t1, t2;
    char recbuf[RECSIZ], keybuf[RECSIZ], fldbuf[FLDSIZ];
 
@@ -85,38 +85,29 @@ int main()
          getField(fldbuf, recbuf, keyfields[i]);
          strcat(keybuf, fldbuf);
       }
-      Tree->insert( std::string(keybuf) , n++);   
+      
+      if ( std::string(keybuf) == target ) {
+         for (int i = 0; i < ordfields.size(); i++) {
+            // strcat(keybuf, ",");
+            getField(fldbuf, recbuf, ordfields[i]);
+            strcat(keybuf, fldbuf);
+         }
+         Tree->insert( std::string(keybuf) , n);   
+      }
+      
       memset(recbuf, '\0', RECSIZ);
+      ++n;
    }
    ifstr.close();
 
-   std::vector<int> idx = Tree->search(target);
+   // std::vector<int> idx = Tree->search(target);
+   std::vector<int> idx;
+   Tree->loadIdxVector(idx);
    delete Tree;
 
    printHeader();
 
    if ( idx.size() > 0 ) {
-      if ( ordfields.size() > 0 ) { // re-order results if necessary
-         Tree = new AVL(); 
-         ifstr.open(infile, std::ifstream::in | std::ifstream::binary);
-         for (int i = 0; i < idx.size(); i++) {
-            memset(recbuf, '\0', RECSIZ);
-            ifstr.seekg(idx[i] * RECSIZ);
-            ifstr.read(recbuf, RECSIZ);
-            memset(keybuf, '\0', RECSIZ);
-            for (int j = 0; j < ordfields.size(); j++) {
-               if ( j > 0 ) strcat(keybuf, ",");
-               getField(fldbuf, recbuf, ordfields[j]);
-               strcat(keybuf, fldbuf);
-            }
-            Tree->insert( std::string(keybuf) , idx[i]);            
-         }
-         ifstr.close();
-         idx.clear();
-         Tree->loadIdxVector(idx);
-         delete Tree;
-      }
-
       std::cout << "<table id=\"my_table\">\n";
       printHeader(selflds);
       ifstr.open(infile, std::ifstream::in | std::ifstream::binary);
